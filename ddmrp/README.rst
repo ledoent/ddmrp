@@ -214,7 +214,7 @@ Circumstantially, If you need to force the calculation of the ADU go to
 Known issues / Roadmap
 ======================
 
-The mis_builder `roadmap <https://github.com/OCA/ddmrp/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement>`_
+The DDMRP `roadmap <https://github.com/OCA/ddmrp/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement>`_
 and `known issues <https://github.com/OCA/ddmrp/issues?q=is%3Aopen+is%3Aissue+label%3Abug>`_ can
 be found on GitHub.
 
@@ -243,8 +243,6 @@ Authors
 ~~~~~~~
 
 * Eficent
-* Aleph Objects
-* Inc.
 
 Contributors
 ~~~~~~~~~~~~
@@ -280,7 +278,7 @@ promote its widespread use.
     :target: https://github.com/lreficent
     :alt: lreficent
 
-Current `maintainers <https://odoo-community.org/page/maintainer-role>`_:
+Current `maintainers <https://odoo-community.org/page/maintainer-role>`__:
 
 |maintainer-jbeficent| |maintainer-lreficent| 
 
