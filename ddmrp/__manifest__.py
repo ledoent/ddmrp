@@ -5,7 +5,7 @@
 {
     "name": "DDMRP",
     "summary": "Demand Driven Material Requirements Planning",
-    "version": "15.0.1.6.1",
+    "version": "15.0.1.7.0",
     "license": "LGPL-3",
     "development_status": "Beta",
     "author": "ForgeFlow, " "Odoo Community Association (OCA)",
@@ -29,9 +29,9 @@
         "data/stock_buffer_profile_data.xml",
         "data/ir_sequence.xml",
         "data/decimal_precision_data.xml",
+        "security/ddmrp_groups.xml",
+        "security/ddmrp_rules.xml",
         "security/ir.model.access.csv",
-        "security/stock_security.xml",
-        "security/stock_buffer_manual_procurement_security.xml",
         "wizards/make_procurement_buffer_view.xml",
         "views/stock_buffer_profile_view.xml",
         "views/stock_buffer_profile_variability_view.xml",
@@ -52,6 +52,7 @@
         "wizards/res_config_settings_views.xml",
     ],
     "demo": [
+        "demo/ddmrp_demo_user.xml",
         "demo/res_partner_demo.xml",
         "demo/product_category_demo.xml",
         "demo/product_product_demo.xml",
