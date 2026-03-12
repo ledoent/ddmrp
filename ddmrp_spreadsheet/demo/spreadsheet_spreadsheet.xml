@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- ════════════════════════════════════════════════════════════════════
+         Demo Spreadsheet: DDMRP Buffer Dashboard
+         ════════════════════════════════════════════════════════════════════ -->
+
+    <record id="demo_buffer_dashboard" model="spreadsheet.spreadsheet">
+        <field name="name">DDMRP Buffer Dashboard</field>
+        <field name="owner_id" ref="base.user_admin" />
+        <field
+            name="spreadsheet_binary_data"
+            type="base64"
+            file="ddmrp_spreadsheet/demo/demo_buffer_dashboard.json"
+        />
+    </record>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         Refresh Schedule: daily buffer data refresh
+         ════════════════════════════════════════════════════════════════════ -->
+
+    <record id="demo_refresh_daily" model="spreadsheet.refresh.schedule">
+        <field name="name">Daily Buffer Refresh</field>
+        <field name="spreadsheet_id" ref="demo_buffer_dashboard" />
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field
+            name="notify_partner_ids"
+            eval="[(4, ref('base.partner_admin'))]"
+        />
+    </record>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         Subscription: weekly buffer digest
+         ════════════════════════════════════════════════════════════════════ -->
+
+    <record id="demo_sub_weekly" model="spreadsheet.subscription">
+        <field name="spreadsheet_id" ref="demo_buffer_dashboard" />
+        <field name="partner_id" ref="base.partner_admin" />
+        <field name="frequency">weekly</field>
+        <field name="include_pivot_data" eval="True" />
+    </record>
+</odoo>

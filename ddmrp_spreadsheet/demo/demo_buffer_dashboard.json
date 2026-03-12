@@ -1,0 +1,208 @@
+{
+  "version": 21,
+  "sheets": [
+    {
+      "id": "sheet_status",
+      "name": "Buffer Status",
+      "colNumber": 26,
+      "rowNumber": 100,
+      "rows": {},
+      "cols": {
+        "0": {"size": 200},
+        "1": {"size": 140},
+        "2": {"size": 140},
+        "3": {"size": 140},
+        "4": {"size": 140},
+        "5": {"size": 140}
+      },
+      "merges": [],
+      "cells": {
+        "A1": {"content": "=PIVOT(1)"}
+      },
+      "conditionalFormats": [],
+      "figures": [],
+      "filterTables": [],
+      "tables": [],
+      "dataValidationRules": [],
+      "comments": {},
+      "headerGroups": {"ROW": [], "COL": []},
+      "areGridLinesVisible": true,
+      "isVisible": true
+    },
+    {
+      "id": "sheet_zones",
+      "name": "Zone Sizing",
+      "colNumber": 26,
+      "rowNumber": 100,
+      "rows": {},
+      "cols": {
+        "0": {"size": 200},
+        "1": {"size": 140},
+        "2": {"size": 140},
+        "3": {"size": 140},
+        "4": {"size": 140}
+      },
+      "merges": [],
+      "cells": {
+        "A1": {"content": "=PIVOT(2)"}
+      },
+      "conditionalFormats": [],
+      "figures": [],
+      "filterTables": [],
+      "tables": [],
+      "dataValidationRules": [],
+      "comments": {},
+      "headerGroups": {"ROW": [], "COL": []},
+      "areGridLinesVisible": true,
+      "isVisible": true
+    },
+    {
+      "id": "sheet_priority",
+      "name": "Priority Review",
+      "colNumber": 26,
+      "rowNumber": 100,
+      "rows": {},
+      "cols": {
+        "0": {"size": 200},
+        "1": {"size": 140},
+        "2": {"size": 140},
+        "3": {"size": 140}
+      },
+      "merges": [],
+      "cells": {
+        "A1": {"content": "=PIVOT(3)"}
+      },
+      "conditionalFormats": [],
+      "figures": [],
+      "filterTables": [],
+      "tables": [],
+      "dataValidationRules": [],
+      "comments": {},
+      "headerGroups": {"ROW": [], "COL": []},
+      "areGridLinesVisible": true,
+      "isVisible": true
+    },
+    {
+      "id": "sheet_history",
+      "name": "NFP History",
+      "colNumber": 26,
+      "rowNumber": 100,
+      "rows": {},
+      "cols": {
+        "0": {"size": 200},
+        "1": {"size": 140},
+        "2": {"size": 140},
+        "3": {"size": 140},
+        "4": {"size": 140},
+        "5": {"size": 140}
+      },
+      "merges": [],
+      "cells": {
+        "A1": {"content": "=PIVOT(4)"}
+      },
+      "conditionalFormats": [],
+      "figures": [],
+      "filterTables": [],
+      "tables": [],
+      "dataValidationRules": [],
+      "comments": {},
+      "headerGroups": {"ROW": [], "COL": []},
+      "areGridLinesVisible": true,
+      "isVisible": true
+    }
+  ],
+  "settings": {},
+  "customTableStyles": {},
+  "styles": {},
+  "formats": {},
+  "borders": {},
+  "revisionId": "START_REVISION",
+  "uniqueFigureIds": true,
+  "odooVersion": 12,
+  "globalFilters": [],
+  "pivots": {
+    "1": {
+      "type": "ODOO",
+      "id": "1",
+      "formulaId": "1",
+      "name": "Buffer Status Overview",
+      "model": "stock.buffer",
+      "domain": [],
+      "context": {},
+      "measures": [
+        {"id": "__count", "fieldName": "__count"},
+        {"id": "net_flow_position:avg", "fieldName": "net_flow_position", "aggregator": "avg"},
+        {"id": "qualified_demand:sum", "fieldName": "qualified_demand", "aggregator": "sum"},
+        {"id": "incoming_dlt_qty:sum", "fieldName": "incoming_dlt_qty", "aggregator": "sum"},
+        {"id": "procure_recommended_qty:sum", "fieldName": "procure_recommended_qty", "aggregator": "sum"}
+      ],
+      "rows": [{"fieldName": "warehouse_id", "order": "asc"}],
+      "columns": [{"fieldName": "planning_priority_level", "order": "asc"}],
+      "sortedColumn": null,
+      "fieldMatching": {}
+    },
+    "2": {
+      "type": "ODOO",
+      "id": "2",
+      "formulaId": "2",
+      "name": "Zone Sizing by Buffer Profile",
+      "model": "stock.buffer",
+      "domain": [],
+      "context": {},
+      "measures": [
+        {"id": "__count", "fieldName": "__count"},
+        {"id": "top_of_red:avg", "fieldName": "top_of_red", "aggregator": "avg"},
+        {"id": "top_of_yellow:avg", "fieldName": "top_of_yellow", "aggregator": "avg"},
+        {"id": "top_of_green:avg", "fieldName": "top_of_green", "aggregator": "avg"},
+        {"id": "adu:avg", "fieldName": "adu", "aggregator": "avg"}
+      ],
+      "rows": [{"fieldName": "buffer_profile_id", "order": "asc"}],
+      "columns": [],
+      "sortedColumn": null,
+      "fieldMatching": {}
+    },
+    "3": {
+      "type": "ODOO",
+      "id": "3",
+      "formulaId": "3",
+      "name": "Priority Matrix",
+      "model": "stock.buffer",
+      "domain": [],
+      "context": {},
+      "measures": [
+        {"id": "__count", "fieldName": "__count"},
+        {"id": "net_flow_position_percent:avg", "fieldName": "net_flow_position_percent", "aggregator": "avg"},
+        {"id": "on_hand_percent:avg", "fieldName": "on_hand_percent", "aggregator": "avg"}
+      ],
+      "rows": [{"fieldName": "planning_priority_level", "order": "asc"}],
+      "columns": [{"fieldName": "execution_priority_level", "order": "asc"}],
+      "sortedColumn": null,
+      "fieldMatching": {}
+    },
+    "4": {
+      "type": "ODOO",
+      "id": "4",
+      "formulaId": "4",
+      "name": "NFP History Trend",
+      "model": "ddmrp.history",
+      "domain": [],
+      "context": {},
+      "measures": [
+        {"id": "__count", "fieldName": "__count"},
+        {"id": "net_flow_position:avg", "fieldName": "net_flow_position", "aggregator": "avg"},
+        {"id": "top_of_red:avg", "fieldName": "top_of_red", "aggregator": "avg"},
+        {"id": "top_of_yellow:avg", "fieldName": "top_of_yellow", "aggregator": "avg"},
+        {"id": "top_of_green:avg", "fieldName": "top_of_green", "aggregator": "avg"},
+        {"id": "adu:avg", "fieldName": "adu", "aggregator": "avg"}
+      ],
+      "rows": [{"fieldName": "date", "granularity": "month", "order": "asc"}],
+      "columns": [],
+      "sortedColumn": null,
+      "fieldMatching": {}
+    }
+  },
+  "pivotNextId": 5,
+  "lists": {},
+  "listNextId": 1,
+  "chartOdooMenusReferences": {}
+}
