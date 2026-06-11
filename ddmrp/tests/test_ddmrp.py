@@ -1590,3 +1590,12 @@ class TestDdmrp(TestDdmrpCommon):
         chart_data = json.loads(self.buffer_a.ddmrp_demand_chart)
         self.assertNotIn("No demand detected", chart_data["div"])
         self.assertTrue(chart_data["script"])
+
+    def test_52_buffer_reference_in_procurement_values(self):
+        """The buffer reference is propagated as reference_ids, the key
+        consumed by stock.rule._get_stock_move_values."""
+        reference = self.env["stock.reference"].create({"name": "BUF/TEST"})
+        self.buffer_purchase.group_id = reference
+        values = self.buffer_purchase._prepare_procurement_values(10.0)
+        self.assertEqual(values.get("reference_ids"), reference)
+        self.assertNotIn("group_id", values)
