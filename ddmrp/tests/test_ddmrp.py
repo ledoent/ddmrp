@@ -1590,3 +1590,31 @@ class TestDdmrp(TestDdmrpCommon):
         chart_data = json.loads(self.buffer_a.ddmrp_demand_chart)
         self.assertNotIn("No demand detected", chart_data["div"])
         self.assertTrue(chart_data["script"])
+
+    def test_53_procure_uom_follows_product_uom_change(self):
+        """Changing a product UoM resets the buffers' procurement UoM.
+
+        _compute_procure_uom_id re-derives procure_uom_id from the product
+        UoM whenever it changes, so buffers can never be left with a
+        procurement UoM incompatible with the new product UoM.
+        """
+        product = self.productModel.create(
+            {
+                "name": "Product UoM follow",
+                "is_storable": True,
+                "uom_id": self.uom_unit.id,
+            }
+        )
+        buffer = self.bufferModel.create(
+            {
+                "buffer_profile_id": self.buffer_profile_pur.id,
+                "product_id": product.id,
+                "warehouse_id": self.warehouse.id,
+                "location_id": self.stock_location.id,
+                "adu_calculation_method": self.adu_fixed.id,
+                "procure_uom_id": self.dozen_unit.id,
+            }
+        )
+        meter = self.env.ref("uom.product_uom_meter")
+        product.product_tmpl_id.uom_id = meter
+        self.assertEqual(buffer.procure_uom_id, meter)
