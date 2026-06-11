@@ -1584,3 +1584,12 @@ class TestDdmrp(TestDdmrpCommon):
         meter = self.env.ref("uom.product_uom_meter")
         product.product_tmpl_id.uom_id = meter
         self.assertEqual(buffer.procure_uom_id, meter)
+
+    def test_53_buffer_reference_in_procurement_values(self):
+        """The buffer reference is propagated as reference_ids, the key
+        consumed by stock.rule._get_stock_move_values."""
+        reference = self.env["stock.reference"].create({"name": "BUF/TEST"})
+        self.buffer_purchase.group_id = reference
+        values = self.buffer_purchase._prepare_procurement_values(10.0)
+        self.assertEqual(values.get("reference_ids"), reference)
+        self.assertNotIn("group_id", values)
