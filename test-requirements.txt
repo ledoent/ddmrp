@@ -1,0 +1,3 @@
+# DO NOT MERGE — temporary pins until the dep PRs land.
+odoo-addon-ddmrp_adjustment @ git+https://github.com/ledoent/ddmrp.git@19.0-mig-ddmrp_adjustment#subdirectory=ddmrp_adjustment
+odoo-addon-web_widget_x2many_2d_matrix @ git+https://github.com/OCA/web.git@refs/pull/3578/head#subdirectory=web_widget_x2many_2d_matrix
