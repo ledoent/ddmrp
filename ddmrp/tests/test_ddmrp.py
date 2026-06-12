@@ -1569,3 +1569,39 @@ class TestDdmrp(TestDdmrpCommon):
             with po_form.order_line.new() as line:
                 line.product_id = self.product_purchased
         po_form.save()
+    def test_52_procure_uom_follows_product_uom_change(self):
+        """Changing a product UoM resets the buffers' procurement UoM.
+
+        _compute_procure_uom_id re-derives procure_uom_id from the product
+        UoM whenever it changes, so buffers can never be left with a
+        procurement UoM incompatible with the new product UoM.
+        """
+        product = self.productModel.create(
+            {
+                "name": "Product UoM follow",
+                "is_storable": True,
+                "uom_id": self.uom_unit.id,
+            }
+        )
+        buffer = self.bufferModel.create(
+            {
+                "buffer_profile_id": self.buffer_profile_pur.id,
+                "product_id": product.id,
+                "warehouse_id": self.warehouse.id,
+                "location_id": self.stock_location.id,
+                "adu_calculation_method": self.adu_fixed.id,
+                "procure_uom_id": self.dozen_unit.id,
+            }
+        )
+        meter = self.env.ref("uom.product_uom_meter")
+        product.product_tmpl_id.uom_id = meter
+        self.assertEqual(buffer.procure_uom_id, meter)
+
+    def test_53_buffer_reference_in_procurement_values(self):
+        """The buffer reference is propagated as reference_ids, the key
+        consumed by stock.rule._get_stock_move_values."""
+        reference = self.env["stock.reference"].create({"name": "BUF/TEST"})
+        self.buffer_purchase.group_id = reference
+        values = self.buffer_purchase._prepare_procurement_values(10.0)
+        self.assertEqual(values.get("reference_ids"), reference)
+        self.assertNotIn("group_id", values)
