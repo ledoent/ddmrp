@@ -1,0 +1,4 @@
+# DO NOT MERGE — temporary pins until the ddmrp_warning and
+# ddmrp_cron_actions_as_job 19.0 MIGs land.
+odoo-addon-ddmrp_warning @ git+https://github.com/ledoent/ddmrp.git@19.0-mig-ddmrp_warning#subdirectory=ddmrp_warning
+odoo-addon-ddmrp_cron_actions_as_job @ git+https://github.com/ledoent/ddmrp.git@19.0-mig-ddmrp_cron_actions_as_job#subdirectory=ddmrp_cron_actions_as_job
