@@ -10,8 +10,8 @@ from odoo.addons.ddmrp.tests.test_distributed_max_proc_time import TestDdmrpMaxP
 class TestDdmrpPackaging(TestDdmrpMaxProcTime):
     def setUp(self):
         super().setUp()
-        self.buffer1 = self.env.ref("ddmrp.stock_buffer_fp01")
-        self.buffer2 = self.env.ref("ddmrp.stock_buffer_rm01")
+        self.buffer1 = self.buffer_fp01
+        self.buffer2 = self.buffer_rm01
 
         self.packaging1 = self.env["product.packaging"].create(
             {
