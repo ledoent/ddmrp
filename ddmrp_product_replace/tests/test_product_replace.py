@@ -11,8 +11,8 @@ class TestDDMRPProductReplace(TestDdmrpCommon):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.buffer = cls.env.ref("ddmrp.stock_buffer_rm01")
-        cls.old_product = cls.env.ref("ddmrp.product_product_rm01")
+        cls.buffer = cls.buffer_rm01
+        cls.old_product = cls.product_rm01
         cls.put_away_rule_obj = cls.env["stock.putaway.rule"]
         cls.old_product.write(
             {
@@ -25,7 +25,7 @@ class TestDDMRPProductReplace(TestDdmrpCommon):
             {
                 "product_id": cls.old_product.id,
                 "location_in_id": cls.env.ref("stock.stock_location_stock").id,
-                "location_out_id": cls.env.ref("stock.stock_location_components").id,
+                "location_out_id": cls.location_shelf1.id,
             }
         )
         # Change adu method:

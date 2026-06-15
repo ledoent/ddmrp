@@ -1,7 +1,7 @@
 # Copyright 2017-21 ForgeFlow S.L. (https://www.forgeflow.com)
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl.html).
 
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
 
@@ -72,13 +72,7 @@ class DdmrpProductReplace(models.TransientModel):
     @api.depends("old_product_ids")
     def _compute_primary_old_product_id(self):
         for rec in self:
-            product = fields.first(rec.old_product_ids)
-            if isinstance(product.id, models.NewId):
-                # NewId instances are not handled correctly in v13, this is a
-                # small workaround. In future versions it might not be needed.
-                product_id = product.id.origin
-                product = self.env["product.product"].browse(product_id)
-            rec.primary_old_product_id = product
+            rec.primary_old_product_id = rec.old_product_ids[:1]._origin
 
     @api.depends("old_product_ids")
     def _compute_buffer_ids(self):
@@ -99,7 +93,7 @@ class DdmrpProductReplace(models.TransientModel):
                 b.product_id not in rec.old_product_ids for b in rec.buffer_ids
             ):
                 raise ValidationError(
-                    _(
+                    self.env._(
                         "Some of the affected buffers have a different product than "
                         "the replaced ones."
                     )
@@ -115,7 +109,7 @@ class DdmrpProductReplace(models.TransientModel):
             ]
         self.buffer_ids.write(vals)
         return {
-            "name": _("Replacing Product"),
+            "name": self.env._("Replacing Product"),
             "res_id": self.new_product_id.id,
             "view_type": "form",
             "view_mode": "form",
@@ -141,9 +135,9 @@ class DdmrpProductReplace(models.TransientModel):
         for replaced in self.buffer_ids.filtered(lambda b: b.product_id != primary_old):
             # Do not create buffers for non-primary products.
             # Instead assign one of the already created.
-            replacing = fields.first(
-                new_buffers.filtered(lambda b: b.location_id == replaced.location_id)  # noqa: B023
-            )
+            replacing = new_buffers.filtered(
+                lambda b: b.location_id == replaced.location_id  # noqa: B023
+            )[:1]
             if not replacing:
                 replacing = new_buffers[0]
             replaced.write({"replaced_by_id": replacing.id})
@@ -168,7 +162,7 @@ class DdmrpProductReplace(models.TransientModel):
                 )
         new_buffers.cron_actions()
         return {
-            "name": _("New Stock Buffers"),
+            "name": self.env._("New Stock Buffers"),
             "domain": [("id", "in", new_buffers.ids)],
             "view_mode": "list,form",
             "res_model": "stock.buffer",
@@ -178,9 +172,11 @@ class DdmrpProductReplace(models.TransientModel):
     def button_validate(self):
         self.ensure_one()
         if self.is_already_replaced:
-            raise ValidationError(_("Some of the buffers have already been replaced."))
+            raise ValidationError(
+                self.env._("Some of the buffers have already been replaced.")
+            )
         if not self.buffer_ids:
-            raise ValidationError(_("No affected buffers found."))
+            raise ValidationError(self.env._("No affected buffers found."))
         # Only the first product is used as a template to create new products/buffers.
         primary_old = self.primary_old_product_id
         if self.use_existing == "new":
