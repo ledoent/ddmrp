@@ -8,6 +8,7 @@ import odoo.tests.common as common
 class TestDdmrp(common.TransactionCase):
     def setUp(self):
         super().setUp()
+        self.env = self.env(context=dict(self.env.context, tracking_disable=True))
 
         # Models
         self.productModel = self.env["product.product"]
@@ -50,7 +51,7 @@ class TestDdmrp(common.TransactionCase):
                             "name": p.name,
                             "product_id": p.id,
                             "product_uom_qty": 2,
-                            "product_uom": p.uom_id.id,
+                            "product_uom_id": p.uom_id.id,
                             "price_unit": 10,
                         }
                         for p in self.product_a
