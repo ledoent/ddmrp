@@ -7,9 +7,22 @@
         <field name="model">stock.buffer</field>
         <field name="inherit_id" ref="ddmrp.stock_buffer_view_form" />
         <field name="arch" type="xml">
-            <group name="buffer_information" position="inside">
-                <field name="flow_index_group_id" />
-            </group>
+            <notebook position="inside">
+                <page name="flow_index" string="Flow Index">
+                    <group>
+                        <group name="flow_index_plan" string="Planned">
+                            <field name="order_frequency" />
+                            <field name="order_frequency_group" />
+                            <field name="flow_index_group_id" widget="badge" />
+                        </group>
+                        <group name="flow_index_actual" string="Actual">
+                            <field name="actual_order_frequency" />
+                            <field name="actual_order_count" />
+                            <field name="actual_flow_index_group_id" widget="badge" />
+                        </group>
+                    </group>
+                </page>
+            </notebook>
         </field>
     </record>
 </odoo>
