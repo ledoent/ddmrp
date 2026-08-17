@@ -1,0 +1,2 @@
+# DO NOT MERGE — temporary pin until the ddmrp_exclude_moves_adu_calc 19.0 MIG lands.
+odoo-addon-ddmrp_exclude_moves_adu_calc @ git+https://github.com/ledoent/ddmrp.git@19.0-mig-ddmrp_exclude_moves_adu_calc#subdirectory=ddmrp_exclude_moves_adu_calc
