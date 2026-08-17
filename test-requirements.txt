@@ -1,0 +1,2 @@
+# DO NOT MERGE — temporary pin until the ddmrp_chatter 19.0 MIG lands.
+odoo-addon-ddmrp_chatter @ git+https://github.com/ledoent/ddmrp.git@19.0-mig-ddmrp_chatter#subdirectory=ddmrp_chatter
