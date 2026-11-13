@@ -15,7 +15,7 @@ class TestExcludeMtoDemand(TestDdmrpCommon):
         buffer = self.buffer_purchase
         product = buffer.product_id
         qty = 30.0
-        date_move = datetime.today()
+        date_move = datetime.today()  # noqa: DTZ002
 
         # Make-to-stock demand: a plain outgoing delivery from the buffer.
         mts_pick = self.create_picking_out(

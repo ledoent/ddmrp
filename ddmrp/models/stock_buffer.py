@@ -80,19 +80,16 @@ class StockBuffer(models.Model):
     active = fields.Boolean(default=True)
     warehouse_id = fields.Many2one(
         comodel_name="stock.warehouse",
-        string="Warehouse",
         ondelete="cascade",
         required=True,
     )
     location_id = fields.Many2one(
         comodel_name="stock.location",
-        string="Location",
         ondelete="cascade",
         required=True,
     )
     product_id = fields.Many2one(
         comodel_name="product.product",
-        string="Product",
         domain=[("is_storable", "=", True)],
         ondelete="cascade",
         required=True,
@@ -140,7 +137,6 @@ class StockBuffer(models.Model):
     )
     company_id = fields.Many2one(
         comodel_name="res.company",
-        string="Company",
         required=True,
         default=lambda self: self.env.company,
     )
@@ -358,8 +354,10 @@ class StockBuffer(models.Model):
         ]
         lines = self.env["stock.move.line"].search(domain)
         lines = lines.filtered(
-            lambda line: line.location_id.is_sublocation_of(self.location_id)
-            and not line.location_dest_id.is_sublocation_of(self.location_id)
+            lambda line: (
+                line.location_id.is_sublocation_of(self.location_id)
+                and not line.location_dest_id.is_sublocation_of(self.location_id)
+            )
         )
         return sum(lines.mapped("quantity_product_uom"))
 
@@ -837,9 +835,9 @@ class StockBuffer(models.Model):
 
             # Plot demand data:
             if demand_data or mrp_data:
-                x_demand = list(convert_datetime_type(x) for x in demand_data.keys())
+                x_demand = [convert_datetime_type(x) for x in demand_data]
                 y_demand = list(demand_data.values())
-                x_mrp = list(convert_datetime_type(x) for x in mrp_data.keys())
+                x_mrp = [convert_datetime_type(x) for x in mrp_data]
                 y_mrp = list(mrp_data.values())
 
                 p = figure(
@@ -873,8 +871,8 @@ class StockBuffer(models.Model):
                     )
                 p.line(
                     [
-                        datetime.today() - timedelta(days=1),
-                        datetime.today() + timedelta(days=rec.order_spike_horizon),
+                        datetime.today() - timedelta(days=1),  # noqa: DTZ002
+                        datetime.today() + timedelta(days=rec.order_spike_horizon),  # noqa: DTZ002
                     ],
                     [rec.order_spike_threshold, rec.order_spike_threshold],
                     line_width=2,
@@ -905,7 +903,7 @@ class StockBuffer(models.Model):
 
             # Plot supply data:
             if supply_data:
-                x_supply = list(convert_datetime_type(x) for x in supply_data.keys())
+                x_supply = [convert_datetime_type(x) for x in supply_data]
                 y_supply = list(supply_data.values())
 
                 p = figure(
@@ -927,8 +925,8 @@ class StockBuffer(models.Model):
                 # White line to have similar proportion to demand chart.
                 p.line(
                     [
-                        datetime.today() - timedelta(days=1),
-                        datetime.today() + timedelta(days=rec.order_spike_horizon),
+                        datetime.today() - timedelta(days=1),  # noqa: DTZ002
+                        datetime.today() + timedelta(days=rec.order_spike_horizon),  # noqa: DTZ002
                     ],
                     [rec.order_spike_threshold, rec.order_spike_threshold],
                     line_width=2,
@@ -1042,8 +1040,10 @@ class StockBuffer(models.Model):
                 rec.product_vendor_code = False
                 continue
             supplier_info = rec._get_product_sellers().filtered(
-                lambda r: r.partner_id == rec.main_supplier_id  # noqa: B023
-                and (not r.product_id or r.product_id == rec.product_id)  # noqa: B023
+                lambda r: (
+                    r.partner_id == rec.main_supplier_id  # noqa: B023
+                    and (not r.product_id or r.product_id == rec.product_id)
+                )  # noqa: B023
             )
             rec.product_vendor_code = (
                 supplier_info[0].product_code if supplier_info else False
@@ -1051,7 +1051,6 @@ class StockBuffer(models.Model):
 
     buffer_profile_id = fields.Many2one(
         comodel_name="stock.buffer.profile",
-        string="Buffer Profile",
         required=True,
     )
     replenish_method = fields.Selection(
@@ -1062,7 +1061,6 @@ class StockBuffer(models.Model):
     )
     main_supplier_id = fields.Many2one(
         comodel_name="res.partner",
-        string="Main Supplier",
         help=(
             "The main supplier is the first listed supplier defined "
             "on the product that is valid for this product variant. "
@@ -1423,10 +1421,10 @@ class StockBuffer(models.Model):
 
     def _get_dates_adu_past_demand(self, horizon):
         date_from = fields.Date.to_string(
-            self.warehouse_id.wh_plan_days(datetime.now(), -1 * horizon)
+            self.warehouse_id.wh_plan_days(datetime.now(), -1 * horizon)  # noqa: DTZ005
         )
         date_to = fields.Date.to_string(
-            self.warehouse_id.wh_plan_days(datetime.now(), -1)
+            self.warehouse_id.wh_plan_days(datetime.now(), -1)  # noqa: DTZ005
         )
         return date_from, date_to
 
@@ -1578,7 +1576,7 @@ class StockBuffer(models.Model):
     def _search_stock_moves_qualified_demand_domain(self):
         self.ensure_one()
         horizon = self.order_spike_horizon
-        date_to = self.warehouse_id.wh_plan_days(datetime.now(), horizon)
+        date_to = self.warehouse_id.wh_plan_days(datetime.now(), horizon)  # noqa: DTZ005
         return [
             ("product_id", "=", self.product_id.id),
             (
@@ -1593,19 +1591,23 @@ class StockBuffer(models.Model):
         domain = self._search_stock_moves_qualified_demand_domain()
         moves = self.env["stock.move"].search(domain)
         moves = moves.filtered(
-            lambda move: move.location_id.is_sublocation_of(self.location_id)
-            and (
-                not move.location_dest_id.is_sublocation_of(self.location_id)
-                or (
-                    move.location_final_id
-                    and not move.location_final_id.is_sublocation_of(self.location_id)
+            lambda move: (
+                move.location_id.is_sublocation_of(self.location_id)
+                and (
+                    not move.location_dest_id.is_sublocation_of(self.location_id)
+                    or (
+                        move.location_final_id
+                        and not move.location_final_id.is_sublocation_of(
+                            self.location_id
+                        )
+                    )
                 )
+                # Make-to-order demand is served by its own pegged supply, not from
+                # the buffer, so it must not deflate the net flow position. This
+                # mirrors the supply side, which keeps the MTO purchase line out of
+                # the buffer (see purchase.order.line._find_buffer_link).
+                and not move._ddmrp_is_mto()
             )
-            # Make-to-order demand is served by its own pegged supply, not from
-            # the buffer, so it must not deflate the net flow position. This
-            # mirrors the supply side, which keeps the MTO purchase line out of
-            # the buffer (see purchase.order.line._find_buffer_link).
-            and not move._ddmrp_is_mto()
         )
         return moves
 
@@ -1632,12 +1634,14 @@ class StockBuffer(models.Model):
         domain = self._search_stock_moves_incoming_domain(outside_dlt=outside_dlt)
         moves = self.env["stock.move"].search(domain)
         moves = moves.filtered(
-            lambda move: not move.location_id.is_sublocation_of(self.location_id)
-            and (
-                move.location_dest_id.is_sublocation_of(self.location_id)
-                or (
-                    move.location_final_id
-                    and move.location_final_id.is_sublocation_of(self.location_id)
+            lambda move: (
+                not move.location_id.is_sublocation_of(self.location_id)
+                and (
+                    move.location_dest_id.is_sublocation_of(self.location_id)
+                    or (
+                        move.location_final_id
+                        and move.location_final_id.is_sublocation_of(self.location_id)
+                    )
                 )
             )
         )
@@ -1674,7 +1678,7 @@ class StockBuffer(models.Model):
     def _search_mrp_moves_qualified_demand_domain(self):
         self.ensure_one()
         horizon = self.order_spike_horizon
-        date_to = self.warehouse_id.wh_plan_days(datetime.now(), horizon)
+        date_to = self.warehouse_id.wh_plan_days(datetime.now(), horizon)  # noqa: DTZ005
         return [
             ("product_id", "=", self.product_id.id),
             ("mrp_type", "=", "d"),
@@ -1909,13 +1913,17 @@ class StockBuffer(models.Model):
         po_states = self._get_unconfirmed_po_states()
         if dlt_interval == "inside":
             pols = self.purchase_line_ids.filtered(
-                lambda line: line.date_planned <= fields.Datetime.to_datetime(cut_date)
-                and line.state in po_states
+                lambda line: (
+                    line.date_planned <= fields.Datetime.to_datetime(cut_date)
+                    and line.state in po_states
+                )
             )
         elif dlt_interval == "outside":
             pols = self.purchase_line_ids.filtered(
-                lambda line: line.date_planned > fields.Datetime.to_datetime(cut_date)
-                and line.state in po_states
+                lambda line: (
+                    line.date_planned > fields.Datetime.to_datetime(cut_date)
+                    and line.state in po_states
+                )
             )
         else:
             pols = self.purchase_line_ids.filtered(lambda line: line.state in po_states)

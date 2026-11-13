@@ -9,9 +9,7 @@ class BomStructureReport(models.AbstractModel):
 
     def _get_pdf_doc(self, bom_id, data, quantity, product_variant_id=None):
         doc = super()._get_pdf_doc(bom_id, data, quantity, product_variant_id)
-        doc["show_buffered"] = (
-            True if data and data.get("show_buffered") == "true" else False
-        )
+        doc["show_buffered"] = bool(data and data.get("show_buffered") == "true")
         return doc
 
     @api.model
@@ -93,9 +91,11 @@ class BomStructureReport(models.AbstractModel):
         for component in data.get("components", []):
             bom_line = next(
                 filter(
-                    lambda line: line.get("bom_id", False) == component["bom_id"]
-                    and line.get("name", False) == component["name"]
-                    and line.get("level", False) == component["level"],
+                    lambda line: (
+                        line.get("bom_id", False) == component["bom_id"]
+                        and line.get("name", False) == component["name"]
+                        and line.get("level", False) == component["level"]
+                    ),
                     lines,
                 )
             )

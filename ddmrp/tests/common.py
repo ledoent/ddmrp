@@ -465,9 +465,9 @@ class TestDdmrpCommon(common.TransactionCase):
         )
 
         # dates for a period of 120 days for estimates.
-        cls.estimate_date_from = cls.calendar.plan_days(1, datetime.today()).date()
+        cls.estimate_date_from = cls.calendar.plan_days(1, datetime.today()).date()  # noqa: DTZ002
         days = 119
-        dt = cls.calendar.plan_days(+1 * days + 1, datetime.today())
+        dt = cls.calendar.plan_days(+1 * days + 1, datetime.today())  # noqa: DTZ002
         cls.estimate_date_to = dt.date()
 
         # Run cron jobs:

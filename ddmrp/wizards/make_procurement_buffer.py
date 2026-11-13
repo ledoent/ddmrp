@@ -170,17 +170,14 @@ class MakeProcurementBufferItem(models.TransientModel):
         readonly=False,
     )
     product_id = fields.Many2one(
-        string="Product",
         comodel_name="product.product",
         readonly=True,
     )
     warehouse_id = fields.Many2one(
-        string="Warehouse",
         comodel_name="stock.warehouse",
         readonly=True,
     )
     location_id = fields.Many2one(
-        string="Location",
         comodel_name="stock.location",
         readonly=True,
     )
