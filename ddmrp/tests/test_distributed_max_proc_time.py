@@ -13,9 +13,11 @@ class TestDdmrpMaxProcTime(TestDdmrpCommon):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        # Set calendar timezone to UTC+1 so working hours (8:00 local) map to
-        # 7:00 UTC, making the test independent of the admin user's timezone.
-        cls.calendar.tz = "Europe/Brussels"
+        # Set the timezone to UTC+1 so working hours (8:00 local) map to 7:00
+        # UTC, making the test independent of the admin user's timezone. 20.0
+        # dropped resource.calendar.tz; plan_days/plan_hours now read
+        # env.company.tz.
+        cls.main_company.tz = "Europe/Brussels"
         # we store goods in "Replenish" and make pull rules to
         # go through "Replenish Step" when we replenish Stock
         cls.replenish_location = cls.env["stock.location"].create(

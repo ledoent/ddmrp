@@ -3,7 +3,6 @@
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
-from odoo.tools import float_compare
 
 
 class MakeProcurementBuffer(models.TransientModel):
@@ -59,9 +58,7 @@ class MakeProcurementBuffer(models.TransientModel):
                     if qty_to_order > max_order:
                         qty = max_order
                     else:
-                        rounding = (
-                            line.procure_uom_id.rounding or line.product_uom.rounding
-                        )
+                        rounding_uom = line.procure_uom_id or line.product_uom
                         profile = line.buffer_profile_id
                         limit_to_free_qty = (
                             line.item_type == "distributed"
@@ -69,11 +66,7 @@ class MakeProcurementBuffer(models.TransientModel):
                         )
                         if limit_to_free_qty:
                             if (
-                                float_compare(
-                                    qty_to_order,
-                                    line.procure_min_qty,
-                                    precision_rounding=rounding,
-                                )
+                                rounding_uom.compare(qty_to_order, line.procure_min_qty)
                                 < 0
                             ):
                                 # not enough in stock to have a batch

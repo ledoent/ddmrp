@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <odoo>
     <record id="product_normal_form_view_inherit" model="ir.ui.view">
         <field name="name">product.product.form.inherit</field>
@@ -13,7 +13,7 @@
                     type="object"
                     name="action_view_stock_buffers"
                     class="oe_stat_button"
-                    icon="fa-flask"
+                    icon="science"
                     invisible="buffer_count == 0"
                     groups="stock.group_stock_user"
                 >
@@ -40,7 +40,7 @@
                     type="object"
                     name="action_view_stock_buffers"
                     class="oe_stat_button"
-                    icon="fa-flask"
+                    icon="science"
                     invisible="buffer_count == 0"
                     groups="stock.group_stock_user"
                 >

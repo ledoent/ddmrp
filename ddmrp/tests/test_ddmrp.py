@@ -1340,7 +1340,7 @@ class TestDdmrp(TestDdmrpCommon):
         )
         self.assertEqual(len(move), 1)
         self.assertEqual(move.location_dest_id, self.warehouse.wh_input_stock_loc_id)
-        self.assertEqual(move.location_final_id, self.warehouse.lot_stock_id)
+        self.assertEqual(move.forecasted_location_id, self.warehouse.lot_stock_id)
         self.assertEqual(move.product_qty, 225)
         _ob, in_buffers = move._find_buffers_to_update_nfp()
         self.assertIn(
@@ -1359,7 +1359,7 @@ class TestDdmrp(TestDdmrpCommon):
         move_2 = picking_2.move_ids
         self.assertEqual(len(move_2), 1)
         self.assertEqual(move_2.location_dest_id, self.warehouse.wh_qc_stock_loc_id)
-        self.assertEqual(move_2.location_final_id, self.warehouse.lot_stock_id)
+        self.assertEqual(move_2.forecasted_location_id, self.warehouse.lot_stock_id)
         self.buffer_purchase.cron_actions()
         # Incoming qty should be the same.
         self.assertEqual(self.buffer_purchase.incoming_dlt_qty, 225.0)
@@ -1372,7 +1372,7 @@ class TestDdmrp(TestDdmrpCommon):
         move_3 = picking_3.move_ids
         self.assertEqual(len(move_3), 1)
         self.assertEqual(move_3.location_dest_id, self.warehouse.lot_stock_id)
-        self.assertEqual(move_3.location_final_id, self.warehouse.lot_stock_id)
+        self.assertEqual(move_3.forecasted_location_id, self.warehouse.lot_stock_id)
         self.buffer_purchase.cron_actions()
         # Incoming qty should be the same.
         self.assertEqual(self.buffer_purchase.incoming_dlt_qty, 225.0)
@@ -1408,7 +1408,7 @@ class TestDdmrp(TestDdmrpCommon):
         )
         self.assertEqual(len(move), 1)
         self.assertEqual(move.location_dest_id, self.warehouse.wh_pack_stock_loc_id)
-        self.assertEqual(move.location_final_id, self.customer_location)
+        self.assertEqual(move.forecasted_location_id, self.customer_location)
         self.assertEqual(move.product_qty, 10)
         self.buffer_purchase.cron_actions()
         self.assertEqual(self.buffer_purchase.qualified_demand, 10.0)
@@ -1427,7 +1427,7 @@ class TestDdmrp(TestDdmrpCommon):
         move_2 = picking_2.move_ids
         self.assertEqual(len(move_2), 1)
         self.assertEqual(move_2.location_dest_id, self.warehouse.wh_output_stock_loc_id)
-        self.assertEqual(move_2.location_final_id, self.customer_location)
+        self.assertEqual(move_2.forecasted_location_id, self.customer_location)
         move_2._do_unreserve()  # reserved moves are ignored by the buffer.
         self.assertEqual(move_2.state, "confirmed")
         self.buffer_purchase.cron_actions()
@@ -1441,7 +1441,7 @@ class TestDdmrp(TestDdmrpCommon):
         move_3 = picking_3.move_ids
         self.assertEqual(len(move_3), 1)
         self.assertEqual(move_3.location_dest_id, self.customer_location)
-        self.assertEqual(move_3.location_final_id, self.customer_location)
+        self.assertEqual(move_3.forecasted_location_id, self.customer_location)
         move_3._do_unreserve()
         self.assertEqual(move_3.state, "confirmed")
         self.buffer_purchase.cron_actions()
@@ -1527,10 +1527,9 @@ class TestDdmrp(TestDdmrpCommon):
     def test_50_chart_execution_no_product_no_crash(self):
         """Opening a new buffer form without product_id should not crash.
 
-        In v19, onchange fetches all view fields before product_id is set,
-        leaving product_uom empty (rounding=0.0).
+        onchange fetches all view fields before product_id is set, so the
+        chart compute runs with product_uom still empty.
         """
-        # Before the fix this raised AssertionError: precision_rounding must be positive
         form = Form(self.env["stock.buffer"], view="ddmrp.stock_buffer_view_form")
         # Chart should be empty while no product is set
         data = json.loads(form.ddmrp_chart_execution)
@@ -1565,9 +1564,11 @@ class TestDdmrp(TestDdmrpCommon):
         vendor = self.partner_model.create({"name": "Form Vendor"})
         po_form = Form(self.env["purchase.order"])
         po_form.partner_id = vendor
-        with self.assertNoLogs("odoo.domains", level="WARNING"):
-            with po_form.order_line.new() as line:
-                line.product_id = self.product_purchased
+        with (
+            self.assertNoLogs("odoo.domains", level="WARNING"),
+            po_form.order_line.new() as line,
+        ):
+            line.product_id = self.product_purchased
         po_form.save()
 
     def test_56_demand_chart_shows_all_demand_moves(self):

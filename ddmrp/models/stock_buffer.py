@@ -6,13 +6,12 @@ import json
 import logging
 import operator as py_operator
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from math import pi
 
 from odoo import api, exceptions, fields, models, modules
 from odoo.exceptions import ValidationError
 from odoo.models import Constraint
-from odoo.tools import float_compare, float_round
 from odoo.tools.misc import split_every
 
 _logger = logging.getLogger(__name__)
@@ -164,7 +163,7 @@ class StockBuffer(models.Model):
         for buffer in self:
             polines = buffer._get_rfq_dlt(dlt_interval=None)
             for line in polines:
-                res[buffer.id] += line.product_uom_id._compute_quantity(
+                res[buffer.id] += line.uom_id._compute_quantity(
                     line.product_qty, buffer.product_uom, round=False
                 )
         return res
@@ -292,12 +291,18 @@ class StockBuffer(models.Model):
                     # We found the day with "wh_plan_day", now determine
                     # the first available hour in the day (wh_plan_day returns
                     # the stop hour), and add the procurement time.
+                    # In 20.0, plan_hours() converts the reference date to the
+                    # company timezone with astimezone(); a naive datetime
+                    # would be interpreted as server local time, so localize it
+                    # as UTC explicitly and return a naive UTC datetime.
                     dt_planned = calendar.plan_hours(
                         # expect hours
                         max_proc_time / 60,
                         # start from the first working hours available
-                        dt_planned.replace(hour=0, minute=0, second=0),
+                        dt_planned.replace(hour=0, minute=0, second=0, tzinfo=UTC),
                     )
+                    if dt_planned:
+                        dt_planned = dt_planned.astimezone(UTC).replace(tzinfo=None)
 
             else:
                 dt_planned = (
@@ -355,8 +360,8 @@ class StockBuffer(models.Model):
         lines = self.env["stock.move.line"].search(domain)
         lines = lines.filtered(
             lambda line: (
-                line.location_id.is_sublocation_of(self.location_id)
-                and not line.location_dest_id.is_sublocation_of(self.location_id)
+                line.location_id._child_of(self.location_id)
+                and not line.location_dest_id._child_of(self.location_id)
             )
         )
         return sum(lines.mapped("quantity_product_uom"))
@@ -427,7 +432,7 @@ class StockBuffer(models.Model):
         "buffer_profile_id.lead_time_id.factor",
         "red_override",
         "buffer_profile_id.variability_id.factor",
-        "product_uom.rounding",
+        "product_uom",
         "lead_days",
         "product_id.seller_ids.delay",
     )
@@ -435,13 +440,11 @@ class StockBuffer(models.Model):
         for rec in self:
             if rec.product_id and rec.replenish_method in ["replenish", "min_max"]:
                 dlt = rec.dlt + rec.extra_lead_time
-                rec.red_base_qty = float_round(
-                    dlt * rec.adu * rec.buffer_profile_id.lead_time_id.factor,
-                    precision_rounding=rec.product_uom.rounding,
+                rec.red_base_qty = rec.product_uom.round(
+                    dlt * rec.adu * rec.buffer_profile_id.lead_time_id.factor
                 )
-                rec.red_safety_qty = float_round(
-                    rec.red_base_qty * rec.buffer_profile_id.variability_id.factor,
-                    precision_rounding=rec.product_uom.rounding,
+                rec.red_safety_qty = rec.product_uom.round(
+                    rec.red_base_qty * rec.buffer_profile_id.variability_id.factor
                 )
                 rec.red_zone_qty = rec.red_base_qty + rec.red_safety_qty
             elif rec.product_id and rec.replenish_method == "replenish_override":
@@ -456,7 +459,7 @@ class StockBuffer(models.Model):
         "buffer_profile_id.lead_time_id.factor",
         "order_cycle",
         "minimum_order_quantity",
-        "product_uom.rounding",
+        "product_uom",
         "green_override",
         "top_of_yellow",
     )
@@ -464,21 +467,14 @@ class StockBuffer(models.Model):
         for rec in self:
             if rec.product_id and rec.replenish_method in ["replenish", "min_max"]:
                 # Using imposed or desired minimum order cycle
-                rec.green_zone_oc = float_round(
-                    rec.order_cycle * rec.adu,
-                    precision_rounding=rec.product_uom.rounding,
-                )
+                rec.green_zone_oc = rec.product_uom.round(rec.order_cycle * rec.adu)
                 # Using lead time factor
                 dlt = rec.dlt + rec.extra_lead_time
-                rec.green_zone_lt_factor = float_round(
-                    dlt * rec.adu * rec.buffer_profile_id.lead_time_id.factor,
-                    precision_rounding=rec.product_uom.rounding,
+                rec.green_zone_lt_factor = rec.product_uom.round(
+                    dlt * rec.adu * rec.buffer_profile_id.lead_time_id.factor
                 )
                 # Using minimum order quantity
-                rec.green_zone_moq = float_round(
-                    rec.minimum_order_quantity,
-                    precision_rounding=rec.product_uom.rounding,
-                )
+                rec.green_zone_moq = rec.product_uom.round(rec.minimum_order_quantity)
 
                 # The biggest option of the above will be used as the green
                 # zone value
@@ -500,7 +496,7 @@ class StockBuffer(models.Model):
         "buffer_profile_id.replenish_method",
         "order_cycle",
         "minimum_order_quantity",
-        "product_uom.rounding",
+        "product_uom",
         "yellow_override",
         "red_zone_qty",
     )
@@ -510,9 +506,7 @@ class StockBuffer(models.Model):
                 rec.yellow_zone_qty = 0
             elif rec.product_id and rec.replenish_method == "replenish":
                 dlt = rec.dlt + rec.extra_lead_time
-                rec.yellow_zone_qty = float_round(
-                    dlt * rec.adu, precision_rounding=rec.product_uom.rounding
-                )
+                rec.yellow_zone_qty = rec.product_uom.round(dlt * rec.adu)
             elif rec.product_id and rec.replenish_method == "replenish_override":
                 rec.yellow_zone_qty = rec.yellow_override
             else:
@@ -525,7 +519,7 @@ class StockBuffer(models.Model):
         "qty_multiple",
         "product_uom",
         "procure_uom_id",
-        "product_uom.rounding",
+        "product_uom",
     )
     def _compute_procure_recommended_qty(self):
         subtract_qty = self.sudo()._quantity_in_progress()
@@ -571,12 +565,12 @@ class StockBuffer(models.Model):
         # This means max, min and multiple quantities are relative to
         # the procure UoM.
         if self.procure_uom_id:
-            rounding = self.procure_uom_id.rounding
+            rounding_uom = self.procure_uom_id
             adjusted_qty = self.product_id.uom_id._compute_quantity(
                 qty, self.procure_uom_id
             )
         else:
-            rounding = self.product_uom.rounding
+            rounding_uom = self.product_uom
             adjusted_qty = qty
 
         # Apply qty multiple and minimum quantity (maximum quantity
@@ -585,19 +579,11 @@ class StockBuffer(models.Model):
         multiple_tolerance = self.qty_multiple * (
             self.company_id.ddmrp_qty_multiple_tolerance / 100
         )
-        if (
-            float_compare(remainder, multiple_tolerance, precision_rounding=rounding)
-            > 0
-        ):
+        if rounding_uom.compare(remainder, multiple_tolerance) > 0:
             adjusted_qty += self.qty_multiple - remainder
-        elif float_compare(remainder, 0.0, precision_rounding=rounding) > 0:
+        elif rounding_uom.compare(remainder, 0.0) > 0:
             adjusted_qty -= remainder
-        if (
-            float_compare(
-                adjusted_qty, self.procure_min_qty, precision_rounding=rounding
-            )
-            < 0
-        ):
+        if rounding_uom.compare(adjusted_qty, self.procure_min_qty) < 0:
             adjusted_qty = self.procure_min_qty
         return adjusted_qty
 
@@ -716,20 +702,11 @@ class StockBuffer(models.Model):
         p = figure(frame_width=300, frame_height=400, y_axis_label="Quantity")
         p.xaxis.visible = False
         p.toolbar.logo = None
-        tor_exec = float_round(
-            self.top_of_red / 2,
-            precision_rounding=self.product_uom.rounding,
-        )
+        tor_exec = self.product_uom.round(self.top_of_red / 2)
         toy_exec = self.top_of_red
-        tog_exec = float_round(
-            self.top_of_red + self.green_zone_qty,
-            precision_rounding=self.product_uom.rounding,
-        )
+        tog_exec = self.product_uom.round(self.top_of_red + self.green_zone_qty)
         tor2_exec = self.top_of_green
-        toy2_exec = float_round(
-            (tor2_exec + tog_exec) / 2,
-            precision_rounding=self.product_uom.rounding,
-        )
+        toy2_exec = self.product_uom.round((tor2_exec + tog_exec) / 2)
         hex_colors = self._get_colors_hex_map(pallete="execution")
         red = p.vbar(
             x=1,
@@ -1042,8 +1019,8 @@ class StockBuffer(models.Model):
             supplier_info = rec._get_product_sellers().filtered(
                 lambda r: (
                     r.partner_id == rec.main_supplier_id  # noqa: B023
-                    and (not r.product_id or r.product_id == rec.product_id)
-                )  # noqa: B023
+                    and (not r.product_id or r.product_id == rec.product_id)  # noqa: B023
+                )
             )
             rec.product_vendor_code = (
                 supplier_info[0].product_code if supplier_info else False
@@ -1447,13 +1424,13 @@ class StockBuffer(models.Model):
             ("location_dest_id", "not in", locations.ids),
             "|",
             ("location_dest_id.usage", "!=", "inventory"),
-            ("scrap_id", "!=", False),
+            ("is_scrap", "=", True),
             ("product_id", "=", self.product_id.id),
             ("date", ">=", date_from),
             ("date", "<=", date_to),
         ]
         if not self.env.company.ddmrp_adu_calc_include_scrap:
-            domain.append(("scrap_id", "=", False))
+            domain.append(("is_scrap", "=", False))
         return domain
 
     def _calc_adu_past_demand(self):
@@ -1518,13 +1495,13 @@ class StockBuffer(models.Model):
             ("location_dest_id", "not in", locations.ids),
             "|",
             ("location_dest_id.usage", "!=", "inventory"),
-            ("scrap_id", "!=", False),
+            ("is_scrap", "=", True),
             ("product_id", "=", self.product_id.id),
             ("date", ">=", date_from),
             ("date", "<=", date_to),
         ]
         if not self.env.company.ddmrp_adu_calc_include_scrap:
-            domain.append(("scrap_id", "=", False))
+            domain.append(("is_scrap", "=", False))
         return domain
 
     def _calc_adu_future_demand(self):
@@ -1592,14 +1569,12 @@ class StockBuffer(models.Model):
         moves = self.env["stock.move"].search(domain)
         moves = moves.filtered(
             lambda move: (
-                move.location_id.is_sublocation_of(self.location_id)
+                move.location_id._child_of(self.location_id)
                 and (
-                    not move.location_dest_id.is_sublocation_of(self.location_id)
+                    not move.location_dest_id._child_of(self.location_id)
                     or (
-                        move.location_final_id
-                        and not move.location_final_id.is_sublocation_of(
-                            self.location_id
-                        )
+                        move.forecasted_location_id
+                        and not move.forecasted_location_id._child_of(self.location_id)
                     )
                 )
                 # Make-to-order demand is served by its own pegged supply, not from
@@ -1635,12 +1610,12 @@ class StockBuffer(models.Model):
         moves = self.env["stock.move"].search(domain)
         moves = moves.filtered(
             lambda move: (
-                not move.location_id.is_sublocation_of(self.location_id)
+                not move.location_id._child_of(self.location_id)
                 and (
-                    move.location_dest_id.is_sublocation_of(self.location_id)
+                    move.location_dest_id._child_of(self.location_id)
                     or (
-                        move.location_final_id
-                        and move.location_final_id.is_sublocation_of(self.location_id)
+                        move.forecasted_location_id
+                        and move.forecasted_location_id._child_of(self.location_id)
                     )
                 )
             )
@@ -1667,11 +1642,8 @@ class StockBuffer(models.Model):
             demand_by_days[move_date] = 0.0
         for move in moves:
             date = move.date.date()
-            demand_by_days[date] += (
-                move.product_qty
-                - move.product_uom._compute_quantity(
-                    move.quantity, move.product_id.uom_id
-                )
+            demand_by_days[date] += move.product_qty - move.uom_id._compute_quantity(
+                move.quantity, move.product_id.uom_id
             )
         return demand_by_days
 
@@ -1689,9 +1661,7 @@ class StockBuffer(models.Model):
         domain = self._search_mrp_moves_qualified_demand_domain()
         moves = self.env["mrp.move"].search(domain)
         moves = moves.filtered(
-            lambda move: move.mrp_area_id.location_id.is_sublocation_of(
-                self.location_id
-            )
+            lambda move: move.mrp_area_id.location_id._child_of(self.location_id)
         )
         return moves
 
@@ -1835,7 +1805,7 @@ class StockBuffer(models.Model):
 
     def _procure_qty_to_order(self):
         qty_to_order = self.procure_recommended_qty
-        rounding = self.procure_uom_id.rounding or self.product_uom.rounding
+        rounding_uom = self.procure_uom_id or self.product_uom
         qty_in_progress = self._quantity_in_progress()[self._origin.id]
         if (
             self.item_type == "distributed"
@@ -1844,10 +1814,8 @@ class StockBuffer(models.Model):
             # If we don't procure more than what we have in stock, we prevent
             # backorders on the replenishment
             if (
-                float_compare(
-                    self.distributed_source_location_qty,
-                    self.procure_min_qty,
-                    precision_rounding=rounding,
+                rounding_uom.compare(
+                    self.distributed_source_location_qty, self.procure_min_qty
                 )
                 < 0
             ):
@@ -1858,11 +1826,8 @@ class StockBuffer(models.Model):
                 # move only what we have in stock
                 return min(qty_to_order, self.distributed_source_location_qty)
         elif (
-            float_compare(qty_in_progress, 0, precision_rounding=rounding) > 0
-            and float_compare(
-                qty_to_order, self.green_zone_qty, precision_rounding=rounding
-            )
-            < 0
+            rounding_uom.compare(qty_in_progress, 0) > 0
+            and rounding_uom.compare(qty_to_order, self.green_zone_qty) < 0
         ):
             # When there is qty in progress (e.g. RfQ sent), do not keep
             # auto-procuring small quantities, wait for the qty to be at least GZ.
@@ -1872,15 +1837,12 @@ class StockBuffer(models.Model):
     def do_auto_procure(self):
         if not self.auto_procure:
             return False
-        rounding = self.product_uom.rounding
+        rounding_uom = self.product_uom
         qty_to_order = self._procure_qty_to_order()
-        if float_compare(qty_to_order, 0.0, precision_rounding=rounding) > 0 and (
+        if rounding_uom.compare(qty_to_order, 0.0) > 0 and (
             (
                 self.auto_procure_option == "stockout"
-                and float_compare(
-                    self.net_flow_position, 0.0, precision_rounding=rounding
-                )
-                < 0
+                and rounding_uom.compare(self.net_flow_position, 0.0) < 0
             )
             or self.auto_procure_option == "standard"
         ):

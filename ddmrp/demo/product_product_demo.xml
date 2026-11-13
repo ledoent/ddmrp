@@ -1,5 +1,15 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <odoo noupdate="1">
+    <!-- product.template.route_ids is domained on product_selectable, and 20.0
+         raises when a m2m write links a record outside that domain. The core
+         Manufacture/Buy routes ship warehouse-selectable only, so make them
+         product-selectable before the demo products reference them. -->
+    <record id="mrp.route_warehouse0_manufacture" model="stock.route">
+        <field name="product_selectable" eval="True" />
+    </record>
+    <record id="purchase_stock.route_warehouse0_buy" model="stock.route">
+        <field name="product_selectable" eval="True" />
+    </record>
     <record id="product_product_fp01" model="product.product">
         <field name="name">FP-01</field>
         <field name="categ_id" ref="product_category_ddmrp" />

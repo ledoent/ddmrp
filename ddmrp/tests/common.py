@@ -4,7 +4,7 @@
 
 from datetime import datetime
 
-import odoo.tests.common as common
+from odoo.tests import common
 
 
 class TestDdmrpCommon(common.TransactionCase):
@@ -127,6 +127,11 @@ class TestDdmrpCommon(common.TransactionCase):
 
         # Create products and BoM's:
         manufacture_route = cls.env.ref("mrp.route_warehouse0_manufacture")
+        # 20.0 hard-rejects linking records outside a m2m's comodel domain, and
+        # product.template.route_ids is domained on product_selectable. The core
+        # Manufacture/Buy routes ship warehouse-selectable only, so flip them the
+        # way odoo's own mrp/purchase_stock tests do.
+        manufacture_route.product_selectable = True
         cls.productA = cls.productModel.create(
             {
                 "name": "product A",
@@ -192,6 +197,7 @@ class TestDdmrpCommon(common.TransactionCase):
 
         # Product B (purchased):
         buy_route = cls.env.ref("purchase_stock.route_warehouse0_buy")
+        buy_route.product_selectable = True
         cls.product_purchased = cls.productModel.create(
             {
                 "name": "product Purchased",
@@ -345,7 +351,7 @@ class TestDdmrpCommon(common.TransactionCase):
         cls.bom_fp01 = cls.bomModel.create(
             {
                 "product_tmpl_id": cls.product_fp01.product_tmpl_id.id,
-                "product_uom_id": cls.uom_unit.id,
+                "uom_id": cls.uom_unit.id,
                 "produce_delay": 2.0,
             }
         )
@@ -359,7 +365,7 @@ class TestDdmrpCommon(common.TransactionCase):
         cls.bom_as01 = cls.bomModel.create(
             {
                 "product_tmpl_id": cls.product_as01.product_tmpl_id.id,
-                "product_uom_id": cls.uom_unit.id,
+                "uom_id": cls.uom_unit.id,
                 "produce_delay": 6.0,
             }
         )
@@ -507,7 +513,7 @@ class TestDdmrpCommon(common.TransactionCase):
                         {
                             "product_id": self.productA.id,
                             "date": date_move,
-                            "product_uom": uom.id,
+                            "uom_id": uom.id,
                             "product_uom_qty": qty,
                             "location_id": source_location.id,
                             "location_dest_id": self.customer_location.id,
@@ -534,7 +540,7 @@ class TestDdmrpCommon(common.TransactionCase):
                             "product_id": self.productA.id,
                             "date": date_move,
                             "date_deadline": date_move,
-                            "product_uom": self.productA.uom_id.id,
+                            "uom_id": self.productA.uom_id.id,
                             "product_uom_qty": qty,
                             "location_id": self.supplier_location.id,
                             "location_dest_id": self.binA.id,
@@ -560,7 +566,7 @@ class TestDdmrpCommon(common.TransactionCase):
                         {
                             "product_id": self.productA.id,
                             "date": date_move,
-                            "product_uom": self.productA.uom_id.id,
+                            "uom_id": self.productA.uom_id.id,
                             "product_uom_qty": qty,
                             "location_id": self.binA.id,
                             "location_dest_id": self.binB.id,
@@ -588,7 +594,7 @@ class TestDdmrpCommon(common.TransactionCase):
                         {
                             "product_id": product.id,
                             "date": date_move,
-                            "product_uom": product.uom_id.id,
+                            "uom_id": product.uom_id.id,
                             "product_uom_qty": qty,
                             "location_id": source_location.id,
                             "location_dest_id": self.customer_location.id,
@@ -614,7 +620,7 @@ class TestDdmrpCommon(common.TransactionCase):
                         {
                             "product_id": product.id,
                             "date": date_move,
-                            "product_uom": product.uom_id.id,
+                            "uom_id": product.uom_id.id,
                             "product_uom_qty": qty,
                             "location_id": self.supplier_location.id,
                             "location_dest_id": self.binA.id,
@@ -657,7 +663,7 @@ class TestDdmrpCommon(common.TransactionCase):
             {
                 "product_id": self.productA.id,
                 "date": date_move,
-                "product_uom": self.productA.uom_id.id,
+                "uom_id": self.productA.uom_id.id,
                 "product_uom_qty": qty,
                 "location_id": self.binA.id,
                 "location_dest_id": self.inventory_location.id,

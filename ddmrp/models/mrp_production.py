@@ -58,7 +58,7 @@ class MrpProduction(models.Model):
             found_ids = [
                 a.id for a in all_records if a.execution_priority_level in value
             ]
-        elif operator in ("!=", "<>"):
+        elif operator == "!=":
             found_ids = [
                 a.id for a in all_records if a.execution_priority_level != value
             ]

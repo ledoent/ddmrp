@@ -39,7 +39,7 @@ class TestExcludeMtoDemand(TestDdmrpCommon):
                 "product_id": product.id,
                 "name": product.display_name,
                 "product_qty": qty,
-                "product_uom_id": product.uom_id.id,
+                "uom_id": product.uom_id.id,
                 "price_unit": 1.0,
                 "date_planned": date_move,
                 "move_dest_ids": [(6, 0, mto_move.ids)],
